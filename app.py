@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 import streamlit as st
 from PIL import Image
+from io import BytesIO
 
-# Streamlit Page Config
+# 🎨 Streamlit Page Config
 st.set_page_config(page_title="Image Enhancer", layout="wide", page_icon="🎨")
 
 # 💡 Image Processing Functions
@@ -50,22 +51,29 @@ def adjust_contrast(image, alpha=1.5):
 def invert_colors(image):
     return cv2.bitwise_not(image)
 
-# 🎨 Title
+def convert_image_to_download(image_array):
+    img_pil = Image.fromarray(image_array)
+    buffer = BytesIO()
+    img_pil.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+# 🎨 Header
 st.markdown(
     """
-    <h1 style='text-align: center; color: #FF4B4B;'>🖼️ Image Enhancement & Processing App</h1>
-    <h4 style='text-align: center; color: #00BFFF;'>Upload your image and apply cool enhancements!</h4>
-    """,
-    unsafe_allow_html=True
+    <div style="text-align: center;">
+        <h1 style="color:#FF4B4B;">🌟 Image Enhancement & Processing App 🌟</h1>
+        <h4 style="color:#00BFFF;">Upload your photo and give it a creative twist!</h4>
+    </div>
+    """, unsafe_allow_html=True
 )
 
-# Sidebar with bright colorful style
-st.sidebar.markdown("## 🌈 Enhancement Controls")
+# 🌈 Sidebar
+st.sidebar.markdown("## 🎛️ Enhancement Controls")
+uploaded_file = st.sidebar.file_uploader("📁 Upload an Image", type=["jpg", "jpeg", "png"])
 
-uploaded_file = st.sidebar.file_uploader("📁 Upload an Image", type=["jpg", "png", "jpeg"])
-
+# ✨ Technique Selection
 technique = st.sidebar.selectbox(
-    "✨ Choose an Enhancement Technique",
+    "🎨 Choose an Enhancement",
     [
         "Smoothing",
         "Log Transformation",
@@ -79,25 +87,25 @@ technique = st.sidebar.selectbox(
     ]
 )
 
-# Technique-specific parameters
+# 🎚️ Technique Parameters
 if technique == "Smoothing":
-    k = st.sidebar.slider("🔧 Kernel Size", min_value=1, max_value=21, step=2, value=5)
+    k = st.sidebar.slider("🔧 Kernel Size", 1, 21, 5, step=2)
 
 elif technique == "Gaussian Noise":
-    stddev = st.sidebar.slider("📈 Noise Std Dev", min_value=5, max_value=100, step=5, value=25)
+    stddev = st.sidebar.slider("🌫️ Noise Intensity", 5, 100, 25, step=5)
 
 elif technique == "Brightness Adjustment":
-    brightness = st.sidebar.slider("🌞 Brightness Level", min_value=-100, max_value=100, step=10, value=30)
+    brightness = st.sidebar.slider("💡 Brightness Level", -100, 100, 30, step=10)
 
 elif technique == "Contrast Adjustment":
-    alpha = st.sidebar.slider("🔆 Contrast Factor", min_value=0.5, max_value=3.0, step=0.1, value=1.5)
+    alpha = st.sidebar.slider("⚡ Contrast Factor", 0.5, 3.0, 1.5, step=0.1)
 
-# Image Upload & Display
+# 🖼️ Main Area
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     image_np = np.array(image)
 
-    st.markdown("<h3 style='color: green;'>📸 Original Image:</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:limegreen;'>📸 Original Image:</h3>", unsafe_allow_html=True)
     st.image(image_np, use_column_width=True)
 
     if st.sidebar.button("🚀 Apply Enhancement"):
@@ -122,8 +130,8 @@ if uploaded_file is not None:
             caption = "✨ Sharpened Image"
 
         elif technique == "Gaussian Noise":
-            output = apply_gaussian_noise(image_np, stddev=stddev)
-            caption = "🌫️ Noisy Image (Gaussian Noise)"
+            output = apply_gaussian_noise(image_np, stddev)
+            caption = "🌫️ Gaussian Noisy Image"
 
         elif technique == "Brightness Adjustment":
             output = adjust_brightness(image_np, brightness)
@@ -131,17 +139,22 @@ if uploaded_file is not None:
 
         elif technique == "Contrast Adjustment":
             output = adjust_contrast(image_np, alpha)
-            caption = "🌟 Contrast Adjusted Image"
+            caption = "⚡ Contrast Adjusted Image"
 
         elif technique == "Color Inversion":
             output = invert_colors(image_np)
-            caption = "🎭 Color Inverted Image"
+            caption = "🎭 Inverted Colors"
 
-        # Display Result
-        st.markdown(f"<h3 style='color: #1E90FF;'>{caption}:</h3>", unsafe_allow_html=True)
+        # 🌟 Show Enhanced Image
+        st.markdown(f"<h3 style='color:#1E90FF;'>{caption}:</h3>", unsafe_allow_html=True)
         if technique in ["Histogram Equalization", "Edge Detection"]:
             st.image(output, use_column_width=True, channels="GRAY")
         else:
             st.image(output, use_column_width=True)
+
+        # 💾 Download Button
+        st.markdown("### 📥 Download Enhanced Image")
+        img_bytes = convert_image_to_download(output)
+        st.download_button(label="💾 Download as PNG", data=img_bytes, file_name="enhanced_image.png", mime="image/png")
 else:
     st.info("👈 Upload an image from the sidebar to get started!")
